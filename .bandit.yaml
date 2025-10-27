@@ -1,0 +1,6 @@
+# .bandit.yaml в корне проекта
+skips: ['B101']  # Пропускаем предупреждения об assert
+exclude_dirs: ['.venv', 'instance', 'tests']
+targets:
+  - app.py
+  - models.py

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Простое приложение для заметок</title>
+</head>
+<body>
+    <div style="float: right;">
+        Привет, {{ username }}! | <a href="{{ url_for('logout') }}">Выйти</a>
+    </div>
+
+    <h1>Заметки</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('add_note') }}">
+        {{ form.csrf_token }}
+        <h3>Добавить новую заметку</h3>
+        <input type="text" name="title" placeholder="Заголовок" required>
+        <textarea name="content" placeholder="Содержание" required></textarea>
+        <button type="submit">Добавить заметку</button>
+    </form>
+
+    {% if notes %}
+        <ul>
+            {% for note in notes %}
+            <li>
+                <strong>{{ note.title }}</strong>
+                <p>{{ note.content }}</p>
+                <div class="note-date">
+                    Создано: {{ note.date.strftime('%d.%m.%Y %H:%M') }}
+                </div>
+                <div>
+                    <a href="{{ url_for('edit_note', note_id=note.id) }}">Редактировать</a>
+                    <a href="{{ url_for('delete_note', note_id=note.id) }}"
+                       onclick="return confirm('Вы уверены, что хотите удалить эту заметку?')">Удалить</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Заметок пока нет. Добавьте первую!</p>
+    {% endif %}
+
+    <h2>Оставьте ваш отзыв</h2>
+    <form method="POST" action="/submit_feedback">
+        {{ form.csrf_token }}
+        <label for="username">Имя:</label><br>
+        <input type="text" id="username" name="username"><br>
+        <label for="feedback">Отзыв:</label><br>
+        <textarea id="feedback" name="feedback"></textarea><br>
+        <button type="submit">Отправить</button>
+    </form>
+</body>
+</html>
