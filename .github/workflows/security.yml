@@ -31,24 +31,24 @@ jobs:
 
     - name: Check Bandit results
       run: |
-          # Проверяем наличие критических уязвимостей
-          if ! python -c "
+        # Проверяем наличие критических уязвимостей
+        if python -c "
         import json
         with open('bandit-results.json', 'r') as f:
             data = json.load(f)
-        critical_issues = [issue for issue in data.get('results', [])
-            if issue.get('issue_confidence') == 'HIGH'
-            and issue.get('issue_severity') in ['HIGH', 'MEDIUM']]
-        print(f'Найдено критических уязвимостей: { len(critical_issues) }')
+        critical_issues = [issue for issue in data.get('results', []) 
+                          if issue.get('issue_confidence') == 'HIGH' 
+                          and issue.get('issue_severity') in ['HIGH', 'MEDIUM']]
+        print(f'Найдено критических уязвимостей: {len(critical_issues)}')
         for issue in critical_issues:
-            print(f'- { issue[ \"test_name\" ] }: { issue[ \"issue_text\" ] }')
+            print(f'- {issue[\"test_name\"]}: {issue[\"issue_text\"]}')
         exit(len(critical_issues) > 0)
         "; then
-            echo "✅ Критических уязвимостей не обнаружено"
+          echo "✅ Критических уязвимостей не обнаружено"
         else
-            echo "❌ Обнаружены критические уязвимости безопасности!"
-            echo "Пожалуйста, исправьте их перед слиянием кода."
-            exit 1
+          echo "❌ Обнаружены критические уязвимости безопасности!"
+          echo "Пожалуйста, исправьте их перед слиянием кода."
+          exit 1
         fi
 
     - name: Upload Bandit report
