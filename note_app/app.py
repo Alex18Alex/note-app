@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 import os
-import random
-import sqlite3
-import string
+import secrets
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from markupsafe import escape
@@ -70,7 +68,7 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('Зарегистрироваться')
 
 def generate_nonce():
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+    return secrets.token_urlsafe(16)
 
 @app.context_processor
 def inject_nonce():
