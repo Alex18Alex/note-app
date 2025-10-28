@@ -118,7 +118,7 @@ jobs:
         """Тестируем наличие security headers"""
               response = client.get('/login')
     
-    # Проверяем основные security headers
+        # Проверяем основные security headers
               assert response.status_code == 200
               assert 'X-Content-Type-Options' in response.headers
               assert response.headers['X-Content-Type-Options'] == 'nosniff'
