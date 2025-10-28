@@ -32,7 +32,7 @@ jobs:
     - name: Check Bandit results
       run: |
         # Проверяем наличие критических уязвимостей
-        if ! python -c "
+        if python -c "
         import json
         with open('bandit-results.json', 'r') as f:
             data = json.load(f)
