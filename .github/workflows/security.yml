@@ -115,24 +115,24 @@ jobs:
               return app.test_client()
 
         def test_security_headers(client):
-        """Тестируем наличие security headers"""
+              """Тестируем наличие security headers"""
               response = client.get('/login')
     
-        # Проверяем основные security headers
+              # Проверяем основные security headers
               assert response.status_code == 200
               assert 'X-Content-Type-Options' in response.headers
               assert response.headers['X-Content-Type-Options'] == 'nosniff'
               assert 'X-Frame-Options' in response.headers
 
         def test_csrf_protection(client):
-        """Тестируем наличие CSRF защиты в формах"""
+              """Тестируем наличие CSRF защиты в формах"""
               response = client.get('/login')
               assert response.status_code == 200
-        # Проверяем, что форма содержит CSRF токен
+              # Проверяем, что форма содержит CSRF токен
               assert b'csrf_token' in response.data
 
         def test_authentication_required(client):
-        """Тестируем, что главная страница требует аутентификации"""
+              """Тестируем, что главная страница требует аутентификации"""
               response = client.get('/')
               assert response.status_code == 302  # Редирект на login
 
