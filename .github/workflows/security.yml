@@ -102,7 +102,16 @@ jobs:
         import sys
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-        from app import app as flask_app
+        try:
+          from app import app as flask_app
+        except ImportError as e:
+          print(f"Import error: {e}")
+          # Пробуем альтернативный импорт
+          import importlib.util
+          spec = importlib.util.spec_from_file_location("app", "app.py")
+          app_module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(app_module)
+          flask_app = app_module.app
 
         @pytest.fixture
         def app():
