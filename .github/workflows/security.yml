@@ -100,12 +100,21 @@ jobs:
         import pytest
         import os
         import sys
+        import importlib.util
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-        spec = importlib.util.spec_from_file_location("app", "app.py")
-        app_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(app_module)
-        flask_app = app_module.app
+        try:
+          from app import app as flask_app
+          print("✅ Успешный прямой импорт app")
+        except ImportError as e:
+          print(f"Прямой импорт не удался: {e}")
+          print("Пробуем динамический импорт...")
+          # Динамически импортируем app из текущей директории
+          spec = importlib.util.spec_from_file_location("app", "app.py")
+          app_module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(app_module)
+          flask_app = app_module.app
+          print("✅ Успешный динамический импорт app")
 
         @pytest.fixture
         def app():
