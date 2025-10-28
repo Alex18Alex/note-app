@@ -44,11 +44,11 @@ jobs:
             print(f'- {issue[\"test_name\"]}: {issue[\"issue_text\"]}')
         exit(len(critical_issues) > 0)
         "; then
-          echo "✅ Критических уязвимостей не обнаружено"
-        else
           echo "❌ Обнаружены критические уязвимости безопасности!"
           echo "Пожалуйста, исправьте их перед слиянием кода."
           exit 1
+        else
+          echo "✅ Критических уязвимостей не обнаружено"
         fi
 
     - name: Upload Bandit report
