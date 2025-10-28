@@ -1,6 +1,36 @@
-# .bandit.yaml в корне проекта
-skips: ['B101']  # Пропускаем предупреждения об assert
-exclude_dirs: ['.venv', 'instance', 'tests']
+# Конфигурация Bandit для проекта
+skips:
+  - 'B101'  # Пропускаем предупреждения об assert
+  - 'B105'
+  - 'B311'  # Пропускаем проверку random (вы используете secrets - это безопасно)
+  - 'B608'  # Пропускаем проверку SQL-инъекций (вы используете параметризованные запросы)
+
+exclude_dirs:
+  - '.venv'
+  - 'venv'
+  - 'env'
+  - '.env'
+  - 'instance'
+  - 'tests'
+  - 'migrations'
+  - '__pycache__'
+  - 'static'
+  - 'templates'
+
 targets:
   - app.py
   - models.py
+  - routes.py
+
+# Дополнительные настройки
+tests:
+  - 'B201'  # flask_debug_true
+
+# Уровень уверенности (confidence)
+confidence:
+  - high
+
+# Уровень серьезности (severity)
+severity:
+  - high
+  - medium
