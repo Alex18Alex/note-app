@@ -31,14 +31,14 @@ jobs:
 
     - name: Check Bandit results
       run: |
-     # Проверяем наличие критических уязвимостей
-        if ! python -c "
+          # Проверяем наличие критических уязвимостей
+          if ! python -c "
         import json
         with open('bandit-results.json', 'r') as f:
             data = json.load(f)
         critical_issues = [issue for issue in data.get('results', [])
             if issue.get('issue_confidence') == 'HIGH'
-            and issue.get('issue_severity') in ['HIGH', 'MEDIUM']
+            and issue.get('issue_severity') in ['HIGH', 'MEDIUM']]
         print(f'Найдено критических уязвимостей: { len(critical_issues) }')
         for issue in critical_issues:
             print(f'- { issue[ \"test_name\" ] }: { issue[ \"issue_text\" ] }')
