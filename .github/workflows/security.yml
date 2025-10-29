@@ -27,7 +27,7 @@ jobs:
     - name: Run Bandit security scan
       id: bandit
       run: |
-        bandit -r . -c bandit.yml -f json -o bandit-results.json; echo "Bandit scan completed"
+        bandit -r . -c bandit.yaml -f json -o bandit-results.json; echo "Bandit scan completed"
 
     - name: Check Bandit results
       run: |
