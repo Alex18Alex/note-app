@@ -270,4 +270,4 @@ def submit_feedback():
     return f'Отзыв получен: {feedback} от {username}'
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
