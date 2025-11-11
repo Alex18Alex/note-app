@@ -13,8 +13,8 @@ def setup_postgresql_logging():
             conn = psycopg2.connect(
                 host='localhost',
                 database='notes_app',
-                user='notes_user',
-                password='password123'
+                user='app_user',
+                password='secure_password_123',
             )
 
             # Эмулируем логи PostgreSQL
