@@ -26,14 +26,14 @@ class SIEMMonitor:
 
         # Паттерны для обнаружения SQL инъекций
         self.sql_injection_patterns = [
+            # Только подозрительные конструкции
             r"'.*OR.*1=1",
-            r"UNION.*SELECT",
-            r"DROP.*TABLE",
-            r"INSERT.*INTO",
-            r"DELETE.*FROM",
-            r"UPDATE.*SET",
+            r"UNION.*SELECT.*FROM",
+            r"DROP TABLE.*--",
             r"'.*--",
-            r"'.*;"
+            # Комбинации с комментариями
+            r"INSERT.*INTO.*--",
+            r"UPDATE.*SET.*--",
         ]
 
         # Защищенные эндпоинты для мониторинга
