@@ -461,50 +461,69 @@
 
     // Функция для подготовки данных к экспорту
     function prepareExportData() {
-        if (!currentForecastData) {
-            alert('Сначала постройте прогноз');
-            return null;
-        }
-
-        const rows = [
-            ['Период', 'Тип', 'Задолженность (руб)', 'Нижняя граница', 'Верхняя граница', 'Примечание']
-        ];
-
-        // Добавляем исторические данные
-        currentForecastData.historical.forEach(item => {
-            rows.push([
-                item.period,
-                'История',
-                item.debt,
-                '',
-                '',
-                'Фактические данные'
-            ]);
-        });
-
-        // Добавляем прогнозные данные
-        currentForecastData.forecast.forEach((item, index) => {
-            rows.push([
-                item.period,
-                'Прогноз',
-                item.debt,
-                item.lower_bound || item.debt * 0.9,
-                item.upper_bound || item.debt * 1.1,
-                index === 0 ? 'Ближайший прогноз' : 'Долгосрочный прогноз'
-            ]);
-        });
-
-        // Добавляем пустую строку для разделения
-        rows.push([]);
-
-        // Добавляем метрики точности
-        rows.push(['МЕТРИКИ ТОЧНОСТИ']);
-        rows.push(['MAE', formatNumber(currentForecastData.accuracy_metrics.mae) + ' руб.']);
-        rows.push(['RMSE', formatNumber(currentForecastData.accuracy_metrics.rmse) + ' руб.']);
-        rows.push(['R²', currentForecastData.accuracy_metrics.r_squared]);
-
-        return rows;
+    if (!currentForecastData) {
+        alert('Сначала постройте прогноз');
+        return null;
     }
+
+    const rows = [];
+
+    // Метаданные
+    const datasetSelect = document.getElementById('datasetSelect');
+    const datasetName = datasetSelect.selectedOptions[0]?.text || 'Не выбран';
+    const months = document.getElementById('forecastMonths').value;
+
+    rows.push(['ОТЧЕТ ПО ПРОГНОЗИРОВАНИЮ ЗАДОЛЖЕННОСТИ ЖКУ']);
+    rows.push(['Дата формирования:', new Date().toLocaleString('ru-RU')]);
+    rows.push(['Датасет:', datasetName]);
+    rows.push(['Период прогноза:', months + ' месяцев']);
+    rows.push([]);
+
+    // Заголовки таблицы
+    rows.push(['Период', 'Тип', 'Задолженность (руб)', 'Нижняя граница', 'Верхняя граница', 'Примечание']);
+
+    // Исторические данные
+    currentForecastData.historical.forEach(item => {
+        rows.push([
+            item.period,
+            'История',
+            formatNumber(item.debt),
+            '',
+            '',
+            'Фактические данные'
+        ]);
+    });
+
+    // Прогнозные данные
+    currentForecastData.forecast.forEach((item, index) => {
+        rows.push([
+            item.period,
+            'Прогноз',
+            formatNumber(item.debt),
+            formatNumber(item.lower_bound || item.debt * 0.9),
+            formatNumber(item.upper_bound || item.debt * 1.1),
+            index === 0 ? 'Ближайший прогноз' : 'Долгосрочный прогноз'
+        ]);
+    });
+
+    // Итоги
+    rows.push([]);
+    const totalHistorical = currentForecastData.historical.reduce((sum, item) => sum + item.debt, 0);
+    const totalForecast = currentForecastData.forecast.reduce((sum, item) => sum + item.debt, 0);
+
+    rows.push(['ИТОГОВЫЕ СУММЫ:']);
+    rows.push(['Сумма исторических данных:', formatNumber(totalHistorical) + ' руб.']);
+    rows.push(['Сумма прогнозных данных:', formatNumber(totalForecast) + ' руб.']);
+    rows.push([]);
+
+    // Метрики точности
+    rows.push(['МЕТРИКИ ТОЧНОСТИ']);
+    rows.push(['MAE (Средняя абсолютная ошибка):', formatNumber(currentForecastData.accuracy_metrics.mae) + ' руб.']);
+    rows.push(['RMSE (Среднеквадратичная ошибка):', formatNumber(currentForecastData.accuracy_metrics.rmse) + ' руб.']);
+    rows.push(['R² (Коэффициент детерминации):', currentForecastData.accuracy_metrics.r_squared]);
+
+    return rows;
+}
 
     // Экспорт в CSV
     function exportToCSV() {
