@@ -11,18 +11,17 @@
                 <h5 class="card-title mb-0">Форма загрузки</h5>
             </div>
             <div class="card-body">
-                <!-- Область для перетаскивания файлов -->
-                <div class="upload-area" id="uploadArea">
-                    <div class="text-center py-5">
-                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                        <h4>Перетащите файл сюда или нажмите для выбора</h4>
-                        <p class="text-muted">Поддерживаемые форматы: CSV, Excel (.xlsx)</p>
-                        <button class="btn btn-primary btn-lg mt-3" onclick="document.getElementById('fileInput').click()">
-                            Выбрать файл
-                        </button>
+                <!-- Форма загрузки -->
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="fileInput" class="form-label">Выберите файл</label>
+                        <input type="file" class="form-control" id="fileInput" name="file" accept=".csv,.xlsx" required>
+                        <div class="form-text">Поддерживаемые форматы: CSV, Excel (.xlsx)</div>
                     </div>
-                    <input type="file" id="fileInput" accept=".csv,.xlsx" style="display: none;">
-                </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Загрузить файл
+                    </button>
+                </form>
 
                 <!-- Информация о требуемой структуре данных -->
                 <div class="mt-4">
@@ -53,19 +52,19 @@
                                 <tr>
                                     <td><code>charge_amount</code></td>
                                     <td><span class="badge bg-danger">Да</span></td>
-                                    <td>Сумма начисления</td>
+                                    <td>Сумма начисления (не может быть отрицательной)</td>
                                     <td>1500.00, 2500.50</td>
                                 </tr>
                                 <tr>
                                     <td><code>payment_amount</code></td>
                                     <td><span class="badge bg-danger">Да</span></td>
-                                    <td>Сумма оплаты</td>
+                                    <td>Сумма оплаты (не может быть отрицательной)</td>
                                     <td>1500.00, 1000.00</td>
                                 </tr>
                                 <tr>
                                     <td><code>service_type</code></td>
                                     <td><span class="badge bg-warning">Нет</span></td>
-                                    <td>Тип услуги (автоматически заполнится если отсутствует)</td>
+                                    <td>Тип услуги</td>
                                     <td>Отопление, Водоснабжение</td>
                                 </tr>
                                 <tr>
@@ -84,37 +83,6 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- Превью данных -->
-                <div class="mt-4" id="previewSection" style="display: none;">
-                    <h6>Предварительный просмотр данных:</h6>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        Будут загружены только первые 50 строк для предварительного просмотра
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered" id="previewTable">
-                            <thead class="table-light">
-                                <!-- Заголовки будут заполнены динамически -->
-                            </thead>
-                            <tbody>
-                                <!-- Данные будут заполнены динамически -->
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="mt-3">
-                        <button class="btn btn-success" id="submitBtn" onclick="handleFileUpload()">
-                            <i class="fas fa-save"></i> Сохранить в базу данных
-                        </button>
-                        <button class="btn btn-secondary" onclick="resetUploadForm()">
-                            <i class="fas fa-times"></i> Отмена
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Статус загрузки -->
-                <div id="uploadStatus" class="mt-3"></div>
             </div>
         </div>
 
@@ -145,22 +113,167 @@
     </div>
 </div>
 
+<!-- Модальное окно для отображения ошибок -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="errorModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Ошибка загрузки файла
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="errorMessages" class="mb-3">
+                    <!-- Сюда будут вставляться ошибки -->
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <h6 class="alert-heading">📋 Требования к файлу:</h6>
+                    <ul class="mb-0">
+                        <li><strong>Обязательные колонки:</strong> account_id, period, charge_amount, payment_amount</li>
+                        <li><strong>Суммы:</strong> должны быть ≥ 0 (без отрицательных значений)</li>
+                        <li><strong>Период:</strong> формат ГГГГ-ММ (например, 2024-01)</li>
+                        <li><strong>Пропуски:</strong> не должно быть пустых значений в обязательных полях</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для успешной загрузки -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="successModalLabel">
+                    <i class="fas fa-check-circle"></i> Успешно!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="successMessage" class="text-center">
+                    <!-- Сюда будет вставляться сообщение об успехе -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     // Инициализация при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
-        setupFileUpload();
         loadUploadHistory();
+
+        // Обработчик отправки формы
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showError(['Пожалуйста, выберите файл для загрузки']);
+                return;
+            }
+
+            // Проверка формата файла
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx')) {
+                showError(['Поддерживаются только файлы CSV и Excel (.xlsx)']);
+                return;
+            }
+
+            // Отправка файла
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                console.log('Результат:', result);
+
+                if (result.success) {
+                    showSuccess(result);
+                    fileInput.value = ''; // Очищаем поле выбора файла
+                    loadUploadHistory(); // Обновляем историю
+                } else {
+                    showError(result.errors || [result.message || 'Неизвестная ошибка']);
+                }
+
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showError(['Ошибка соединения с сервером']);
+            }
+        });
     });
+
+    // Функция показа ошибок
+    function showError(errors) {
+        const errorContainer = document.getElementById('errorMessages');
+        errorContainer.innerHTML = '';
+
+        errors.forEach(error => {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger mb-2';
+            alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${error}`;
+            errorContainer.appendChild(alertDiv);
+        });
+
+        // Показываем модальное окно
+        const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
+    }
+
+    // Функция показа успеха
+    function showSuccess(result) {
+        const successContainer = document.getElementById('successMessage');
+
+        let html = `<p class="fs-5 text-success">✅ ${result.message}</p>`;
+
+        if (result.warnings && result.warnings.length > 0) {
+            html += '<div class="alert alert-warning mt-3">';
+            html += '<h6 class="alert-heading">⚠️ Предупреждения:</h6>';
+            html += '<ul class="mb-0">';
+            result.warnings.forEach(w => {
+                html += `<li>${w}</li>`;
+            });
+            html += '</ul></div>';
+        }
+
+        html += `<p class="mt-3">📊 Загружено записей: <b>${result.records_processed}</b></p>`;
+
+        if (result.dataset_id) {
+            html += `<p><a href="/analytics?dataset_id=${result.dataset_id}" class="btn btn-success">Перейти к анализу</a></p>`;
+        }
+
+        successContainer.innerHTML = html;
+
+        // Показываем модальное окно
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+    }
 
     // Загрузка истории загрузок
     async function loadUploadHistory() {
         try {
             const response = await fetch('/api/datasets');
             const datasets = await response.json();
-            
+
             const tbody = document.querySelector('#uploadHistoryTable tbody');
             tbody.innerHTML = '';
-            
+
             datasets.forEach(dataset => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -176,7 +289,7 @@
                 `;
                 tbody.appendChild(row);
             });
-            
+
         } catch (error) {
             console.error('Error loading upload history:', error);
         }
@@ -185,13 +298,6 @@
     // Загрузка конкретного датасета
     function loadDataset(datasetId) {
         window.location.href = `/analytics?dataset_id=${datasetId}`;
-    }
-
-    // Сброс формы загрузки
-    function resetUploadForm() {
-        document.getElementById('fileInput').value = '';
-        document.getElementById('previewSection').style.display = 'none';
-        document.getElementById('uploadStatus').innerHTML = '';
     }
 </script>
 {% endblock %}
