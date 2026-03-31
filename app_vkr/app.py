@@ -8,6 +8,7 @@ import json
 from modules.data_processor import DataProcessor
 from modules.analyzer import DebtAnalyzer
 from modules.forecaster import DebtForecaster
+from modules.Classifier import DebtorClassifier
 from modules.visualizer import DataVisualizer
 
 app = Flask(__name__)
@@ -17,10 +18,17 @@ app.config['DATABASE'] = 'database/jkhu.db'
 
 # Инициализация базы данных
 def init_database():
+    """Создание таблиц в базе данных"""
     os.makedirs('database', exist_ok=True)
-    conn = sqlite3.connect(app.config['DATABASE'])
+
+    # Используем правильный путь к базе данных
+    db_path = app.config['DATABASE']  # это 'database/jkhu.db'
+    print(f"Создаю базу данных по пути: {db_path}")
+
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
+    # Создание таблицы datasets
     cursor.execute('''
                    CREATE TABLE IF NOT EXISTS datasets
                    (
@@ -41,7 +49,9 @@ def init_database():
                        TEXT
                    )
                    ''')
+    print("✅ Таблица datasets создана")
 
+    # Создание таблицы payment_records
     cursor.execute('''
                    CREATE TABLE IF NOT EXISTS payment_records
                    (
@@ -73,10 +83,12 @@ def init_database():
                    ) REFERENCES datasets
                    (
                        id
-                   )
+                   ) ON DELETE CASCADE
                        )
                    ''')
+    print("✅ Таблица payment_records создана")
 
+    # Создание таблицы analysis_results
     cursor.execute('''
                    CREATE TABLE IF NOT EXISTS analysis_results
                    (
@@ -102,14 +114,17 @@ def init_database():
                    ) REFERENCES datasets
                    (
                        id
-                   )
+                   ) ON DELETE CASCADE
                        )
                    ''')
+    print("✅ Таблица analysis_results создана")
 
     conn.commit()
     conn.close()
+    print("✅ База данных успешно инициализирована!")
 
 
+# Вызываем функцию после определения app.config
 init_database()
 
 
@@ -177,6 +192,29 @@ def forecast():
 
     return render_template('forecast.html', dataset_id=dataset_id)
 
+
+@app.route('/api/debt-aging', methods=['GET'])
+def get_debt_aging():
+    """API для получения возрастной структуры задолженности"""
+    dataset_id = request.args.get('dataset_id')
+    if not dataset_id:
+        return jsonify({'error': 'Не указан dataset_id'}), 400
+
+    analyzer = DebtAnalyzer('database/jkhu.db')
+    result = analyzer.get_debt_aging(dataset_id)
+    return jsonify(result)
+
+
+@app.route('/api/debtor-classification', methods=['GET'])
+def get_debtor_classification():
+    """API для получения классификации должников"""
+    dataset_id = request.args.get('dataset_id')
+    if not dataset_id:
+        return jsonify({'error': 'Не указан dataset_id'}), 400
+
+    classifier = DebtorClassifier('database/jkhu.db')
+    result = classifier.classify_debtors(dataset_id)
+    return jsonify(result)
 
 @app.route('/api/datasets')
 def get_datasets():

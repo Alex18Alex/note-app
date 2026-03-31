@@ -117,3 +117,58 @@ class DebtAnalyzer:
             },
             'debtors_data': debtors_df.to_dict('records')
         }
+
+    def get_debt_aging(self, dataset_id):
+        """
+        Анализ возрастной структуры задолженности
+        Классифицирует долги по срокам: 0-30, 31-60, 61-90, более 90 дней
+        """
+        try:
+            conn = sqlite3.connect(self.database_path)
+
+            # Получаем все записи о платежах
+            query = '''
+                    SELECT period,
+                           charge_amount,
+                           payment_amount,
+                           (charge_amount - payment_amount) as debt_amount
+                    FROM payment_records
+                    WHERE dataset_id = ?
+                    '''
+
+            df = pd.read_sql_query(query, conn, params=[dataset_id])
+            conn.close()
+
+            # Если данных нет
+            if df.empty:
+                return {'0-30 дней': 0, '31-60 дней': 0, '61-90 дней': 0, 'более 90 дней': 0}
+
+            # Только записи с долгом
+            df_debt = df[df['debt_amount'] > 0].copy()
+            if df_debt.empty:
+                return {'0-30 дней': 0, '31-60 дней': 0, '61-90 дней': 0, 'более 90 дней': 0}
+
+            # Находим последний период в данных
+            max_period = df_debt['period'].max()
+            reference_date = pd.to_datetime(max_period + '-01', format='%Y-%m-%d')
+
+            # Преобразуем период в дату
+            df_debt['period_date'] = pd.to_datetime(df_debt['period'] + '-01', format='%Y-%m-%d')
+
+            # Рассчитываем возраст долга в днях
+            df_debt['days'] = (reference_date - df_debt['period_date']).dt.days
+            df_debt['days'] = df_debt['days'].clip(lower=0)
+
+            # Классификация по срокам
+            aging = {
+                '0-30 дней': float(df_debt[df_debt['days'] <= 30]['debt_amount'].sum()),
+                '31-60 дней': float(df_debt[(df_debt['days'] > 30) & (df_debt['days'] <= 60)]['debt_amount'].sum()),
+                '61-90 дней': float(df_debt[(df_debt['days'] > 60) & (df_debt['days'] <= 90)]['debt_amount'].sum()),
+                'более 90 дней': float(df_debt[df_debt['days'] > 90]['debt_amount'].sum())
+            }
+
+            return aging
+
+        except Exception as e:
+            print(f"Ошибка в get_debt_aging: {e}")
+            return {'0-30 дней': 0, '31-60 дней': 0, '61-90 дней': 0, 'более 90 дней': 0}
